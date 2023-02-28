@@ -1,0 +1,116 @@
+
+struct twodouble {
+	double begin;
+	double end;
+};
+
+void meshgrid(const struct twodouble &_Input2X, const struct twodouble &_Input2Y, float _size, cv::Mat &_OutputMatX, cv::Mat &_OutputMatY)
+{
+	std::vector<float> t_x, t_y;
+	double temp = 0.0f;
+
+	// x
+	if (_Input2X.begin == _Input2X.end) {
+		for (double i = 0; i <= 1; i += _size) {
+			t_x.push_back(_Input2X.begin);
+		}
+	}
+	else if (_Input2X.begin < _Input2X.end) {
+		for (double i = _Input2X.begin; i <= _Input2X.end;
+			i += _size) {
+			t_x.push_back(i);
+		}
+	}
+	else {
+		for (double i = _Input2X.begin; i >= _Input2X.end;
+			i -= _size) {
+			t_x.push_back(i);
+		}
+	}
+
+	// y
+	if (_Input2Y.begin == _Input2Y.end) {
+		for (double j = 0; j <= 1; j += _size) {
+			t_y.push_back(_Input2Y.begin);
+		}
+	}
+	else if (_Input2Y.begin < _Input2Y.end) {
+		for (double j = _Input2Y.begin; j <= _Input2Y.end;
+			j += _size) {
+			t_y.push_back(j);
+		}
+	}
+	else {
+		for (double j = _Input2Y.begin; j >= _Input2Y.end;
+			j -= _size) {
+			t_y.push_back(j);
+		}
+	}
+
+	//	for (float j = ygv.start; j < ygv.end + (ygv.end - ygv.start)*0.1; j+= (ygv.end - ygv.start)*0.1) t_y.push_back(j);
+
+	cv::repeat(cv::Mat(t_x).t(), t_y.size(), 1, _OutputMatX);
+	cv::repeat(cv::Mat(t_y), 1, t_x.size(), _OutputMatY);
+}
+
+cv::Mat fspecialLoG(int WinSize, int sigma) {
+
+	// I wrote this only for square kernels as I have no need for kernels that aren't square
+	int siz = (WinSize - 1) / 2;
+//	int std2 = std::pow(sigma, 2);
+	int std2 = sigma * sigma;
+
+	twodouble xx;
+	xx.begin = siz * -1;
+	xx.end = siz;
+
+	twodouble yy;
+	yy.begin = siz * -1;
+	yy.end = siz;
+
+	cv::Mat xmesh, ymesh;
+
+	meshgrid(xx, yy, 1, xmesh, ymesh);
+
+	float temp = 0.0;
+	for (int i = 0; i < xmesh.cols; i++) {
+		for (int j = 0; j < xmesh.rows; j++) {
+			temp = xmesh.at<float>(i, j);
+			xmesh.at<float>(i, j) = temp * temp;
+		}
+	}
+	for (int i = 0; i < ymesh.cols; i++) {
+		for (int j = 0; j < ymesh.rows; j++) {
+			temp = ymesh.at<float>(i, j);
+			ymesh.at<float>(i, j) = temp * temp;
+		}
+	}
+
+	cv::Mat arg = -(xmesh + ymesh) / (2 * sigma);
+
+	cv::Mat h(arg.size(), arg.type());
+
+	for (int i = 0; i < arg.cols; i++) {
+		for (int j = 0; j < arg.rows; j++) {
+			h.at<float>(i, j) = std::exp(arg.at<float>(i, j));
+		}
+	}
+
+	if (cv::sum(h)[0] != 0) { h = h / cv::sum(h)[0]; }
+
+	cv::Mat temp_mat;
+	temp_mat = xmesh + ymesh - 2 * std2;
+
+	cv::Mat h1(h.size(), h.type());
+
+	for (int i = 0; i < h.cols; i++) {
+		for (int j = 0; j < h.rows; j++) {
+			h1.at<float>(i, j) = h.at<float>(i, j) * temp_mat.at<float>(i, j);
+		}
+	}
+	h1 = h1 / (pow(std2, 2));
+
+	h = h1 - cv::sum(h1)[0] / (WinSize*WinSize);
+
+	return h;
+}
