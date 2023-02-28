@@ -1,0 +1,14 @@
+// douyin_feed_service.go
+
+package main
+
+import (
+ "context"
+ "fmt"
+)
+
+type DouyinFeedServiceServer struct{}
+
+func (s *DouyinFeedServiceServer) GetDouyinFeed(ctx context.Context, req *douyin_core.DouyinFeedRequest) (*douyin_core.DouyinFeedResponse, error) {
+ // 根据请求参数处理业务逻辑，返回响应结果
+ resp := &d
