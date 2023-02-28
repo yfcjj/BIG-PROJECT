@@ -1,0 +1,19 @@
+message douyin_video_comment_request {
+  required int64 user_id = 1; // 用户id
+  required string token = 2; // 用户鉴权token
+  required int64 video_id = 3; // 视频唯一标识
+  required string comment_text = 4; // 评论内容
+}
+
+message douyin_video_comment_response {
+  required int32 status_code = 1; // 状态码，0-成功，其他值-失败
+  optional string status_msg = 2; // 返回状态描述
+  required Comment comment = 3; // 用户评论信息
+}
+
+message Comment {
+  required int64 id = 1; // 评论唯一标识
+  required User author = 2; // 评论作者信息
+  required string text = 3; // 评论内容
+  required int64 create_time = 4; // 评论创建时间
+}
